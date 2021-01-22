@@ -22,6 +22,31 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * For example, add annotation on wrapped method.
+ * <pre>
+ *    &#064;Wraps(clazz = WrapMethods.class, method = "wrap")
+ *    public String add(String x, String y) {
+ *        System.out.println("inside add method");
+ *        return x + y;
+ *    }
+ * </pre>
+ *
+ * <p> Writing wrapper as following.
+ * <pre>
+ *    public static Object wrap(Object target, Method method, Object[] args) {
+ *        System.out.println("### start");
+ *        Object ret = null;
+ *        try {
+ *            ret = method.invoke(target, args);
+ *        } catch (IllegalAccessException | InvocationTargetException e) {
+ *            e.printStackTrace();
+ *        }
+ *        System.out.println("### end");
+ *        return ret;
+ *    }
+ * </pre>
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface Wraps {

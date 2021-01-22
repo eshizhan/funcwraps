@@ -21,7 +21,7 @@ import io.github.eshizhan.funcwraps.Wraps;
 
 public class TestWraps {
     @Wraps(clazz = WrapMethods.class, method = "wrap")
-    public Integer add(Integer x, Integer y) {
+    public String add(String x, String y) {
         System.out.println("inside add method");
         return x + y;
     }

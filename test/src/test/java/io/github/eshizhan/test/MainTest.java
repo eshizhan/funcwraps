@@ -17,13 +17,20 @@
 
 package io.github.eshizhan.test;
 
-public class App 
+import org.junit.Test;
+
+import static org.junit.Assert.assertTrue;
+
+public class MainTest
 {
-    public static void main( String[] args )
+    @Test
+    public void testWraps()
     {
         System.out.println("starting test");
         TestWraps testWraps = new TestWraps();
-        System.out.println(testWraps.add(1, 2));
-//        System.out.println(testWraps.add2(1, 2));
+        String exp = "#start#s1#s2#end";
+        String ret = testWraps.add("#s1", "#s2");
+        System.out.println(ret);
+        assertTrue(exp.equals(ret));
     }
 }

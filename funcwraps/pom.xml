@@ -3,9 +3,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <artifactId>funcwraps-parent</artifactId>
         <groupId>io.github.eshizhan</groupId>
-        <version>1.0-SNAPSHOT</version>
+        <artifactId>funcwraps-parent</artifactId>
+        <version>0.1.0</version>
     </parent>
 
     <artifactId>funcwraps</artifactId>
@@ -30,7 +30,6 @@
                         </manifest>
                         <manifestEntries>
                             <Premain-Class>io.github.eshizhan.funcwraps.Main</Premain-Class>
-                            <!--<Agent-Class>com.eshizhan.learn2.App</Agent-Class>-->
                             <Can-Redefine-Classes>true</Can-Redefine-Classes>
                             <Can-Retransform-Classes>true</Can-Retransform-Classes>
                         </manifestEntries>

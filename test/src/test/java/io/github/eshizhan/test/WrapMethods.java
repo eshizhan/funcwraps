@@ -24,22 +24,25 @@ import java.lang.reflect.Method;
 import java.util.Map;
 
 public class WrapMethods {
+    public static Object wrap(Object target, Method method, Object[] args) {
+        System.out.println("### start");
+        String test = "#start";
+        Object ret = null;
+        try {
+            ret = method.invoke(target, args);
+            test += ret;
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
+        System.out.println("### end");
+        test += "#end";
+        return test;
+    }
+
     public Object wrapByCopy(Object[] args, Map<String, Object> methodInfo) {
         System.out.println(methodInfo.toString());
         System.out.println("### start");
         Integer ret = ProceedMarker.proceed();
-        System.out.println("### end");
-        return ret;
-    }
-
-    public static Object wrap(Object target, Method method, Object[] args) {
-        System.out.println("### start");
-        Object ret = null;
-        try {
-            ret = method.invoke(target, args);
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            e.printStackTrace();
-        }
         System.out.println("### end");
         return ret;
     }

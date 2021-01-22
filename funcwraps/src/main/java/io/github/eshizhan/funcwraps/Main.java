@@ -33,11 +33,11 @@ public class Main {
     }
 
     /**
-     * java -javaagent:funcwraps/target/funcwraps-1.0-SNAPSHOT.jar -cp XXX XXX
+     * java -javaagent:funcwraps.jar=package.name -cp XXX XXX
      */
     public static void premain(String agentArgs, Instrumentation inst) {
         try {
-            inst.addTransformer(new WrapsTransformer("io.github.eshizhan.test"), true);
+            inst.addTransformer(new WrapsTransformer(agentArgs), true);
         } catch (NotFoundException e) {
             throw new RuntimeException(e);
         }

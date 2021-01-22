@@ -17,7 +17,6 @@
 
 package io.github.eshizhan.funcwraps;
 
-
 import javassist.CannotCompileException;
 import javassist.CtClass;
 import javassist.CtMethod;
@@ -36,7 +35,7 @@ public class WrapsTransformer implements ClassFileTransformer {
         this.wrapsProcessor = new WrapsProcessor(null);
         this.packageName = packageName;
         // generate modify class file
-        CtClass.debugDump = "./transform_debug_dump";
+//        CtClass.debugDump = "./transform_debug_dump";
     }
 
     @Override

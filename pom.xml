@@ -7,7 +7,7 @@
     <groupId>io.github.eshizhan</groupId>
     <artifactId>funcwraps-parent</artifactId>
     <packaging>pom</packaging>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.1.0</version>
     <modules>
         <module>funcwraps</module>
         <module>test</module>

@@ -44,7 +44,8 @@ public class WrapMethods {
 
 Using `exec-maven-plugin` for processing classes, it transform your classes after building.
  Or just running CLI with main class `io.github.eshizhan.funcwraps.Main` with classes path in argument.
- The java instrument also support by `java -javaagent` argument, `premain` entry point also in main class.
+ The java instrument also support by `java -javaagent:funcwraps.jar=package.name` argument,
+  `premain` entry point also in main class.
 
 ```xml
 <plugin>

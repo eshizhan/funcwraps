@@ -22,20 +22,15 @@ public class TestWraps {
     }
 ```
 
-Writing the wrapper method with
- `public static Object wrap(Object target, Method method, Object[] args)`.
- Calling wrapped method by `ret = method.invoke(target, args)`.
+Writing the wrapper method with declaration
+ `public static Object wrap(Method method, Object[] args, Object target) throws Throwable`.
+ Calling wrapped method by `Object ret = method.invoke(target, args)`.
 
 ```java
 public class WrapMethods {
-    public static Object wrap(Object target, Method method, Object[] args) {
+    public static Object wrap(Method method, Object[] args, Object target) throws Throwable {
         System.out.println("### start");
-        Object ret = null;
-        try {
-            ret = method.invoke(target, args);
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            e.printStackTrace();
-        }
+        Object ret = method.invoke(target, args);
         System.out.println("### end");
         return ret;
     }

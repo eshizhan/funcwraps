@@ -23,7 +23,7 @@ import java.lang.reflect.Method;
 import java.util.Map;
 
 public class WrapMethods {
-    public static Object wrap(Object target, Method method, Object[] args) throws Throwable {
+    public static Object wrap(Method method, Object[] args, Object target) throws Throwable {
         System.out.println("### start");
         String test = "#start";
         Object ret = method.invoke(target, args);

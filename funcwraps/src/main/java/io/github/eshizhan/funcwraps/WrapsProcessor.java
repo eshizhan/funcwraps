@@ -106,7 +106,7 @@ class WrapsProcessor {
     }
 
     public CtMethod getWrapperMethod(CtMethod methodOrig) {
-        final String methodParamsDesc = "(java.lang.Object,java.lang.reflect.Method,java.lang.Object[])";
+        final String methodParamsDesc = "(java.lang.reflect.Method,java.lang.Object[],java.lang.Object)";
         final String methodParamsDescByCopy = "(java.lang.Object[],java.util.Map)";
         CtMethod methodWrapper = null;
         try {
@@ -174,7 +174,7 @@ class WrapsProcessor {
         sbBody.append("{\nif (!").append(fieldName).append(".isAccessible()) {")
               .append(fieldName).append(".setAccessible(true);}")
               .append("return ($r)").append(methodWrapperFullName)
-              .append("($0, ").append(fieldName).append(", $args);\n}");
+              .append("(").append(fieldName).append(", $args").append(", $0);\n}");
 //        System.out.println(sbBody.toString());
         methodNew.setBody(sbBody.toString());
         return methodNew;

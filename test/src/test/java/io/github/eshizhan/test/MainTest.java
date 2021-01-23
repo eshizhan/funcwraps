@@ -33,4 +33,8 @@ public class MainTest
         System.out.println(ret);
         assertTrue(exp.equals(ret));
     }
+
+    public static void main(String[] args) {
+        new MainTest().testWraps();
+    }
 }

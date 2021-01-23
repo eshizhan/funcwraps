@@ -13,7 +13,6 @@
     <bytecodeTargetLevel>
       <module name="funcwraps" target="1.8" />
       <module name="funcwraps-parent" target="1.8" />
-      <module name="funcwrapsparent" target="1.5" />
       <module name="test" target="1.8" />
     </bytecodeTargetLevel>
   </component>

@@ -18,10 +18,7 @@
 package io.github.eshizhan.funcwraps;
 
 import javassist.*;
-import javassist.bytecode.AnnotationsAttribute;
-import javassist.bytecode.CodeAttribute;
-import javassist.bytecode.Descriptor;
-import javassist.bytecode.LocalVariableAttribute;
+import javassist.bytecode.*;
 import javassist.bytecode.annotation.Annotation;
 import javassist.expr.ExprEditor;
 import javassist.expr.MethodCall;
@@ -36,6 +33,7 @@ import java.util.stream.Collectors;
 
 class WrapsProcessor {
     private final String WRAPPED_SUFFIX = "$funcwraps$wrapped";
+    private final String REFLECT_SUFFIX = "$reflect$";
     private final String WRAPPER_SUFFIX = "$funcwraps$wrapper";
     private Path classPath;
     private ClassPool classPool;
@@ -144,31 +142,46 @@ class WrapsProcessor {
         return methodWrapper;
     }
 
-    public CtMethod makeBridgeMethod(CtClass ctClass, CtMethod methodOrig, CtMethod methodWrapper) throws CannotCompileException, NotFoundException {
+    public CtMethod makeBridgeMethod(CtClass ctClass, CtMethod methodOrig, CtMethod methodWrapper)
+            throws CannotCompileException, NotFoundException {
         String methodWrapperFullName = methodWrapper.getDeclaringClass().getName() + "." + methodWrapper.getName();
         CtMethod methodNew = CtNewMethod.copy(methodOrig, ctClass, null);
+        SyntheticAttribute syntheticAttribute = new SyntheticAttribute(ctClass.getClassFile2().getConstPool());
 
         String methodOrigName = methodOrig.getName();
         String methodOrigRename = methodOrigName + WRAPPED_SUFFIX;
         methodOrig.setName(methodOrigRename);
-//        MethodInfo methodInfoOrig = methodOrig.getMethodInfo();
-//        methodInfoOrig.setAccessFlags(AccessFlag.setPrivate(methodInfoOrig.getAccessFlags()));
-//        methodInfoOrig.addAttribute(new SyntheticAttribute(ctClass.getClassFile2().getConstPool()));
+
+        MethodInfo methodInfoOrig = methodOrig.getMethodInfo();
+        methodInfoOrig.setAccessFlags(AccessFlag.setPrivate(methodInfoOrig.getAccessFlags()));
+        methodInfoOrig.addAttribute(syntheticAttribute);
 
         String paramClasses = Arrays.stream(methodOrig.getParameterTypes())
                                     .map(t -> t.getName() + ".class")
                                     .collect(Collectors.joining(", "));
-        StringBuffer body = new StringBuffer();
-        body.append("{\njava.lang.reflect.Method method = $0.getClass().getDeclaredMethod(\"");
-        body.append(methodOrigRename + "\", new java.lang.Class[] {" + paramClasses + "});\n");
-        body.append("return ($r)" + methodWrapperFullName + "($0, method, $args);\n}");
+        String fieldName = methodOrigRename + REFLECT_SUFFIX + methodInfoOrig.getLineNumber(0);
 
-//        System.out.println(body.toString());
-        methodNew.setBody(body.toString());
+        StringBuffer sbField = new StringBuffer();
+        sbField.append("private static java.lang.reflect.Method ").append(fieldName).append(" = ")
+               .append(ctClass.getName()).append(".class.getDeclaredMethod(\"").append(methodOrigRename)
+               .append("\", new java.lang.Class[] {").append(paramClasses).append("});\n");
+//        System.out.println(sbField.toString());
+        CtField field = CtField.make(sbField.toString(), ctClass);
+        field.getFieldInfo().addAttribute(syntheticAttribute);
+        ctClass.addField(field);
+
+        StringBuffer sbBody = new StringBuffer();
+        sbBody.append("{\nif (!").append(fieldName).append(".isAccessible()) {")
+              .append(fieldName).append(".setAccessible(true);}")
+              .append("return ($r)").append(methodWrapperFullName)
+              .append("($0, ").append(fieldName).append(", $args);\n}");
+//        System.out.println(sbBody.toString());
+        methodNew.setBody(sbBody.toString());
         return methodNew;
     }
 
-    public CtMethod makeBridgeMethodByCopy(CtClass ctClass, CtMethod methodOrig, CtMethod methodWrapper) throws CannotCompileException, NotFoundException {
+    public CtMethod makeBridgeMethodByCopy(CtClass ctClass, CtMethod methodOrig, CtMethod methodWrapper)
+            throws CannotCompileException, NotFoundException {
         final String markerClassName = "io.github.eshizhan.funcwraps.ProceedMarker";
         final String markerMethodName = "proceed";
 

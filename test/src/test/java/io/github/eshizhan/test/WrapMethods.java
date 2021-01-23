@@ -19,21 +19,15 @@ package io.github.eshizhan.test;
 
 import io.github.eshizhan.funcwraps.ProceedMarker;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
 
 public class WrapMethods {
-    public static Object wrap(Object target, Method method, Object[] args) {
+    public static Object wrap(Object target, Method method, Object[] args) throws Throwable {
         System.out.println("### start");
         String test = "#start";
-        Object ret = null;
-        try {
-            ret = method.invoke(target, args);
-            test += ret;
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            e.printStackTrace();
-        }
+        Object ret = method.invoke(target, args);
+        test += ret;
         System.out.println("### end");
         test += "#end";
         return test;

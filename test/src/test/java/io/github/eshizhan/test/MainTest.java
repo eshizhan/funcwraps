@@ -26,15 +26,30 @@ public class MainTest
     @Test
     public void testWraps()
     {
-        System.out.println("starting test");
+        System.out.println("starting testWraps");
         TestWraps testWraps = new TestWraps();
         String exp = "#start#s1#s2#end";
-        String ret = testWraps.add("#s1", "#s2");
+        String ret = testWraps.testWrapped("#s1", "#s2");
         System.out.println(ret);
         assertTrue(exp.equals(ret));
     }
 
+    @Test
+    public void testWrapsWithParams()
+    {
+        System.out.println("starting testWrapsWithParams");
+        TestWraps testWraps = new TestWraps();
+        String exp = "#start#s1#s2#end#[param1, param2]";
+        String ret = testWraps.testWithParams("#s1", "#s2");
+        System.out.println(ret);
+        assertTrue(exp.equals(ret));
+    }
+
+    /**
+     * for testing java agent
+     */
     public static void main(String[] args) {
         new MainTest().testWraps();
+        new MainTest().testWrapsWithParams();
     }
 }

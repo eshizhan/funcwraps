@@ -14,12 +14,11 @@ Add annotation `@Wraps` on your method that will be wrapped.
  Setting values `clazz` and `method` for assign the wrapper method.
 
 ```java
-public class TestWraps {
-    @Wraps(clazz = WrapMethods.class, method = "wrap")
-    public Integer add(Integer x, Integer y) {
-        System.out.println("inside add method");
-        return x + y;
-    }
+@Wraps(clazz = WrapMethods.class, method = "wrap")
+public Integer testWrapped(Integer x, Integer y) {
+    System.out.println("inside wrapped method");
+    return x + y;
+}
 ```
 
 Writing the wrapper method with declaration
@@ -34,6 +33,29 @@ public class WrapMethods {
         System.out.println("### end");
         return ret;
     }
+}
+```
+
+If you want passing arguments to wrapper method, you can do this:
+
+```java
+@Wraps(clazz = WrapMethods.class, method = "wrapWithParams(param1, param2)")
+public String testWithParams(String x, String y) {
+    System.out.println("inside wrapped method");
+    return x + y;
+}
+```
+
+The arguments will passing as `String[]` type.
+
+```java
+public static Object wrapWithParams(Method method, Object[] args, Object target, String[] wrapParams) throws Throwable {
+    System.out.println("### start");
+    Object ret = method.invoke(target, args);
+    System.out.println("### end");
+    // wrapParams = ["param1", "param2"]
+    System.out.println(Arrays.toString(wrapParams));
+    return test;
 }
 ```
 

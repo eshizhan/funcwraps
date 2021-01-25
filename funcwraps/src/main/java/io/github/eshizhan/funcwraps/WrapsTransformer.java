@@ -17,10 +17,7 @@
 
 package io.github.eshizhan.funcwraps;
 
-import javassist.CannotCompileException;
-import javassist.CtClass;
-import javassist.CtMethod;
-import javassist.NotFoundException;
+import javassist.*;
 
 import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
@@ -28,11 +25,13 @@ import java.lang.instrument.IllegalClassFormatException;
 import java.security.ProtectionDomain;
 
 public class WrapsTransformer implements ClassFileTransformer {
+    private final ClassPool classPool;
     private final WrapsProcessor wrapsProcessor;
     private final String packageName;
 
     public WrapsTransformer(String packageName) throws NotFoundException {
-        this.wrapsProcessor = new WrapsProcessor(null);
+        this.classPool = ClassPool.getDefault();
+        this.wrapsProcessor = new WrapsProcessor(this.classPool);
         this.packageName = packageName;
         // generate modify class file
 //        CtClass.debugDump = "./transform_debug_dump";
@@ -44,18 +43,18 @@ public class WrapsTransformer implements ClassFileTransformer {
         if (!className.startsWith(packageName))
             return null;
         try {
-            CtClass ctClass = wrapsProcessor.getClass(className);
+            CtClass ctClass = classPool.getCtClass(className);
             for (CtMethod methodOrig : wrapsProcessor.findAnnotationMethod(Wraps.class, className)) {
 
-                CtMethod wrapperMethod = wrapsProcessor.getWrapperMethod(methodOrig);
-                if (wrapperMethod != null) {
+                AnnotationParser annotationParser = new AnnotationParser(classPool, methodOrig);
+                if (annotationParser.parsed()) {
                     System.out.println("transform: " + methodOrig);
 
                     CtMethod methodNew;
-                    if (!wrapsProcessor.isCopyWrapper())
-                        methodNew = wrapsProcessor.makeBridgeMethod(ctClass, methodOrig, wrapperMethod);
+                    if (!wrapsProcessor.isUseCopyWrapper())
+                        methodNew = wrapsProcessor.makeBridgeMethod(ctClass, methodOrig, annotationParser);
                     else
-                        methodNew = wrapsProcessor.makeBridgeMethodByCopy(ctClass, methodOrig, wrapperMethod);
+                        methodNew = wrapsProcessor.makeBridgeMethodByCopy(ctClass, methodOrig, annotationParser);
 
                     ctClass.addMethod(methodNew);
                 }

@@ -20,6 +20,7 @@ package io.github.eshizhan.test;
 import io.github.eshizhan.funcwraps.ProceedMarker;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Map;
 
 public class WrapMethods {
@@ -33,11 +34,22 @@ public class WrapMethods {
         return test;
     }
 
-    public Object wrapByCopy(Object[] args, Map<String, Object> methodInfo) {
-        System.out.println(methodInfo.toString());
+    public static Object wrapWithParams(Method method, Object[] args, Object target, String[] wrapParams) throws Throwable {
         System.out.println("### start");
-        Integer ret = ProceedMarker.proceed();
+        String test = "#start";
+        Object ret = method.invoke(target, args);
+        test += ret;
         System.out.println("### end");
-        return ret;
+        test += "#end#";
+        test += Arrays.toString(wrapParams);
+        return test;
     }
+
+//    public Object wrapByCopy(Object[] args, Map<String, Object> methodInfo) {
+//        System.out.println(methodInfo.toString());
+//        System.out.println("### start");
+//        Integer ret = ProceedMarker.proceed();
+//        System.out.println("### end");
+//        return ret;
+//    }
 }

@@ -19,16 +19,30 @@ package io.github.eshizhan.test;
 
 import io.github.eshizhan.funcwraps.Wraps;
 
+import java.lang.reflect.Method;
+
 public class TestWraps {
+    /**
+     * @see WrapMethods#wrap(Method, Object[], Object)
+     */
     @Wraps(clazz = WrapMethods.class, method = "wrap")
-    public String add(String x, String y) {
-        System.out.println("inside add method");
+    public String testWrapped(String x, String y) {
+        System.out.println("inside wrapped method");
+        return x + y;
+    }
+
+    /**
+     * @see WrapMethods#wrapWithParams(Method, Object[], Object, String[])
+     */
+    @Wraps(clazz = WrapMethods.class, method = "wrapWithParams(param1, param2)")
+    public String testWithParams(String x, String y) {
+        System.out.println("inside wrapped method");
         return x + y;
     }
 
 //    @Wraps(clazz = WrapMethods.class, method = "wrapByCopy")
 //    public Integer add2(Integer x, Integer y) {
-//        System.out.println("inside add method");
+//        System.out.println("inside testWrapped method");
 //        return x + y;
 //    }
 }

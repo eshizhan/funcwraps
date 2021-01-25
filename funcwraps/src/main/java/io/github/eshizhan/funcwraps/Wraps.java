@@ -25,26 +25,45 @@ import java.lang.annotation.Target;
 /**
  * For example, add annotation on wrapped method.
  * <pre>
- *    &#064;Wraps(clazz = WrapMethods.class, method = "wrap")
- *    public String add(String x, String y) {
- *        System.out.println("inside add method");
- *        return x + y;
- *    }
+ * &#064;Wraps(clazz = WrapMethods.class, method = "wrap")
+ * public String testWrapped(String x, String y) {
+ *     System.out.println("inside wrapped method");
+ *     return x + y;
+ * }
  * </pre>
  *
  * <p> Writing wrapper as following.
  * <pre>
- *    public static Object wrap(Object target, Method method, Object[] args) {
- *        System.out.println("### start");
- *        Object ret = null;
- *        try {
- *            ret = method.invoke(target, args);
- *        } catch (IllegalAccessException | InvocationTargetException e) {
- *            e.printStackTrace();
- *        }
- *        System.out.println("### end");
- *        return ret;
- *    }
+ * public class WrapMethods {
+ *     public static Object wrap(Method method, Object[] args, Object target) throws Throwable {
+ *         System.out.println("### start");
+ *         // Calling wrapped method
+ *         Object ret = method.invoke(target, args);
+ *         System.out.println("### end");
+ *         return ret;
+ *     }
+ * }
+ * </pre>
+ *
+ * <p> If you want passing arguments to wrapper method, you can do this:
+ * <pre>
+ * &#064;Wraps(clazz = WrapMethods.class, method = "wrapWithParams(param1, param2)")
+ * public String testWithParams(String x, String y) {
+ *     System.out.println("inside wrapped method");
+ *     return x + y;
+ * }
+ * </pre>
+ *
+ * <p>The arguments will passing as `String[]` type.
+ * <pre>
+ * public static Object wrapWithParams(Method method, Object[] args, Object target, String[] wrapParams) throws Throwable {
+ *     System.out.println("### start");
+ *     Object ret = method.invoke(target, args);
+ *     System.out.println("### end");
+ *     // wrapParams = ["param1", "param2"]
+ *     System.out.println(Arrays.toString(wrapParams));
+ *     return test;
+ * }
  * </pre>
  */
 @Retention(RetentionPolicy.RUNTIME)

@@ -29,7 +29,7 @@ public class Main {
         Path classPath = Paths.get(args[0]);
 
         WrapsProcessor wrapsProcessor = new WrapsProcessor(classPath);
-        wrapsProcessor.process();
+        wrapsProcessor.processClassPath();
     }
 
     /**

@@ -18,6 +18,7 @@
 package io.github.eshizhan.funcwraps;
 
 import javassist.*;
+import javassist.bytecode.BadBytecode;
 
 import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
@@ -38,7 +39,9 @@ public class WrapsTransformer implements ClassFileTransformer {
     }
 
     @Override
-    public byte[] transform(ClassLoader classLoader, String classNameParam, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException{
+    public byte[] transform(ClassLoader classLoader, String classNameParam, Class<?> classBeingRedefined,
+                            ProtectionDomain protectionDomain, byte[] classfileBuffer)
+            throws IllegalClassFormatException {
         String className = classNameParam.replaceAll("/", ".");
         if (!className.startsWith(packageName))
             return null;
@@ -51,7 +54,7 @@ public class WrapsTransformer implements ClassFileTransformer {
                     System.out.println("transform: " + methodOrig);
 
                     CtMethod methodNew;
-                    if (!wrapsProcessor.isUseCopyWrapper())
+                    if (!annotationParser.isCopyToTarget())
                         methodNew = wrapsProcessor.makeBridgeMethod(ctClass, methodOrig, annotationParser);
                     else
                         methodNew = wrapsProcessor.makeBridgeMethodByCopy(ctClass, methodOrig, annotationParser);
@@ -65,7 +68,7 @@ public class WrapsTransformer implements ClassFileTransformer {
                 ctClass.detach();
                 return bytecode;
             }
-        } catch (NotFoundException | IOException | CannotCompileException e) {
+        } catch (NotFoundException | IOException | CannotCompileException | BadBytecode e) {
             e.printStackTrace();
         }
         return null;

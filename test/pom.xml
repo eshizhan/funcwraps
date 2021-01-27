@@ -48,12 +48,6 @@
                                 <!--<argument>${project.build.outputDirectory}</argument>-->
                                 <argument>${project.build.testOutputDirectory}</argument>
                             </arguments>
-                            <!--<systemProperties>-->
-                                <!--<property>-->
-                                    <!--<key>copy-wrapper</key>-->
-                                    <!--<value>true</value>-->
-                                <!--</property>-->
-                            <!--</systemProperties>-->
                         </configuration>
                     </execution>
                 </executions>

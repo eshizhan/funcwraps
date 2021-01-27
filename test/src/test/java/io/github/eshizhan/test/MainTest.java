@@ -45,11 +45,34 @@ public class MainTest
         assertTrue(exp.equals(ret));
     }
 
+    @Test
+    public void testWrapsWithCopy() throws Throwable {
+        System.out.println("starting testWrapsWithCopy");
+        TestWraps testWraps = new TestWraps();
+        String exp = "#start#s1#s2#end";
+        String ret = testWraps.testWithCopy("#s1", "#s2");
+        System.out.println(ret);
+        assertTrue(exp.equals(ret));
+    }
+
+    @Test
+    public void testWrapsWithCopyAndParams()
+    {
+        System.out.println("starting testWrapsWithCopy");
+        TestWraps testWraps = new TestWraps();
+        String exp = "#start#s1#s2#end#[param1, param2]";
+        String ret = testWraps.testWithCopyAndParams("#s1", "#s2");
+        System.out.println(ret);
+        assertTrue(exp.equals(ret));
+    }
+
     /**
      * for testing java agent
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Throwable {
         new MainTest().testWraps();
         new MainTest().testWrapsWithParams();
+        new MainTest().testWrapsWithCopy();
+        new MainTest().testWrapsWithCopyAndParams();
     }
 }

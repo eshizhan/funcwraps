@@ -45,11 +45,24 @@ public class WrapMethods {
         return test;
     }
 
-//    public Object wrapByCopy(Object[] args, Map<String, Object> methodInfo) {
-//        System.out.println(methodInfo.toString());
-//        System.out.println("### start");
-//        Integer ret = ProceedMarker.proceed();
-//        System.out.println("### end");
-//        return ret;
-//    }
+    public Object wrapCopy(Method method, Object[] args, Object target) throws Throwable {
+        System.out.println("### start");
+        String test = "#start";
+        Object ret = ProceedMarker.proceed();
+        test += ret;
+        System.out.println("### end");
+        test += "#end";
+        return test;
+    }
+
+    public Object wrapWithCopyAndParams(Method method, Object[] args, Object target, String[] wrapParams) throws Throwable {
+        System.out.println("### start");
+        String test = "#start";
+        String ret = ProceedMarker.proceed();
+        test += ret;
+        System.out.println("### end");
+        test += "#end#";
+        test += Arrays.toString(wrapParams);
+        return test;
+    }
 }

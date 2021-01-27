@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 class WrapsProcessor {
     private Path classPath;
     private ClassPool classPool;
-    private boolean useCopyWrapper;
 
     public WrapsProcessor(ClassPool classPool) throws NotFoundException {
         this(classPool, null);
@@ -48,10 +47,9 @@ class WrapsProcessor {
         this.classPath = classPath;
         if (classPath != null)
             this.classPool.appendClassPath(classPath.toString());
-        this.useCopyWrapper = Boolean.parseBoolean(System.getProperty("copy-wrapper"));
     }
 
-    public void processClassPath() throws NotFoundException, IOException, ClassNotFoundException, CannotCompileException {
+    public void processClassPath() throws NotFoundException, IOException, ClassNotFoundException, CannotCompileException, BadBytecode {
         if (classPath == null)
             throw new RuntimeException("classPath not set with constructor");
         int processed = 0;
@@ -64,7 +62,7 @@ class WrapsProcessor {
                     System.out.println("transform: " + methodOrig);
 
                     CtMethod methodNew;
-                    if (!useCopyWrapper)
+                    if (!annotationParser.isCopyToTarget())
                         methodNew = makeBridgeMethod(ctClass, methodOrig, annotationParser);
                     else
                         methodNew = makeBridgeMethodByCopy(ctClass, methodOrig, annotationParser);
@@ -141,7 +139,7 @@ class WrapsProcessor {
         sbBody.append("{\nif (!").append(methodFieldName).append(".isAccessible()) {")
               .append(methodFieldName).append(".setAccessible(true);}")
               .append("return ($r)").append(methodWrapperFullName)
-              .append("(").append(methodFieldName).append(", $args").append(", $0");
+              .append("(").append(methodFieldName).append(", $args, $0");
         if (!wrapperMethodParameters.isEmpty()) {
             sbBody.append(", new java.lang.String[] {\"")
                   .append(String.join("\",\"", wrapperMethodParameters))
@@ -154,22 +152,25 @@ class WrapsProcessor {
     }
 
     public CtMethod makeBridgeMethodByCopy(CtClass ctClass, CtMethod methodOrig, AnnotationParser annotationParser)
-            throws CannotCompileException, NotFoundException {
+            throws CannotCompileException, NotFoundException, BadBytecode {
         final String markerClassName = "io.github.eshizhan.funcwraps.ProceedMarker";
         final String markerMethodName = "proceed";
 
         CtMethod methodWrapper = annotationParser.getWrapperMethod();
         CtMethod methodNew = CtNewMethod.copy(methodOrig, ctClass, null);
         CtMethod methodWrapperCopy = CtNewMethod.copy(methodWrapper, ctClass, null);
+        SyntheticAttribute syntheticAttribute = new SyntheticAttribute(ctClass.getClassFile2().getConstPool());
 
         String methodOrigName = methodOrig.getName();
         String methodOrigRename = methodOrigName + WrapsProcessorConst.WRAPPED_SUFFIX;
         methodOrig.setName(methodOrigRename);
-//        MethodInfo methodInfoOrig = methodOrig.getMethodInfo();
-//        methodInfoOrig.setAccessFlags(AccessFlag.setPrivate(methodInfoOrig.getAccessFlags()));
-//        methodInfoOrig.addAttribute(new SyntheticAttribute(ctClass.getClassFile2().getConstPool()));
 
-        List<String> params = getWrappedMethodParams(methodNew, methodWrapperCopy);
+        MethodInfo methodInfoOrig = methodOrig.getMethodInfo();
+        methodInfoOrig.setAccessFlags(AccessFlag.setPrivate(methodInfoOrig.getAccessFlags()));
+        methodInfoOrig.addAttribute(syntheticAttribute);
+
+        List<String> wrapperMethodParameters = annotationParser.getWrapperMethodParameters();
+        List<String> params = getWrappedMethodParams(methodOrig, methodWrapperCopy);
         String paramsString = String.join(", ", params);
 //        System.out.println("paramsString: " + paramsString);
 
@@ -180,49 +181,50 @@ class WrapsProcessor {
                     m.replace("{ $_ = " + methodOrigRename + "(" + paramsString + "); }");
             }
         });
-
         String methodWrappedName = methodOrigName + WrapsProcessorConst.WRAPPER_SUFFIX;
         methodWrapperCopy.setName(methodWrappedName);
         ctClass.addMethod(methodWrapperCopy);
 
-        String fullName = methodNew.getName() + Descriptor.toString(methodNew.getSignature());
-        String returnType = methodNew.getReturnType().getName();
-        StringBuffer body = new StringBuffer();
-        body.append("{\njava.util.Map/*<String, Object>*/ methodInfo = new java.util.HashMap/*<>*/();\n");
-        body.append("methodInfo.put(\"this\", $0);\n");
-        body.append("methodInfo.put(\"returnType\", \"" + returnType + "\");\n");
-        body.append("methodInfo.put(\"methodDesc\", \"" + fullName + "\");\n");
-        body.append("return ($r)" + methodWrappedName + "($args, methodInfo);\n}");
+        MethodInfo methodInfoWrapperCopy = methodWrapperCopy.getMethodInfo();
+        methodInfoWrapperCopy.setAccessFlags(AccessFlag.setPrivate(methodInfoWrapperCopy.getAccessFlags()));
+        methodInfoWrapperCopy.addAttribute(syntheticAttribute);
 
+        StringBuffer body = new StringBuffer();
+        body.append("{\n");
+        body.append("return ($r)" + methodWrappedName + "(null, $args, $0");
+        if (!wrapperMethodParameters.isEmpty()) {
+            body.append(", new java.lang.String[] {\"")
+                .append(String.join("\",\"", wrapperMethodParameters))
+                .append("\"}");
+        }
+        body.append(");\n}");
 //        System.out.println(body.toString());
         methodNew.setBody(body.toString());
         return methodNew;
     }
 
-    private List<String> getWrappedMethodParams(CtMethod methodNew, CtMethod methodWrapped) throws NotFoundException {
+    private List<String> getWrappedMethodParams(CtMethod methodOrig, CtMethod methodWrapped) throws NotFoundException {
         CodeAttribute codeAttribute = methodWrapped.getMethodInfo().getCodeAttribute();
         LocalVariableAttribute localVarTable = (LocalVariableAttribute) codeAttribute.getAttribute(LocalVariableAttribute.tag);
 //        MethodParametersAttribute methodParamsAttr = (MethodParametersAttribute) methodWrapped.getMethodInfo().getAttribute(MethodParametersAttribute.tag);
-        CtClass[] parameterTypes = methodNew.getParameterTypes();
+        CtClass[] parameterTypes = methodOrig.getParameterTypes();
 //        System.out.println("###### localVarTable: " + localVarTable);
 //        System.out.println("###### methodParamsAttr: " + methodParamsAttr);
 
         List<String> params = new ArrayList<>();
         if (localVarTable != null) {
-            int offset = 0;
             int modifiers = methodWrapped.getModifiers();
-            if (Modifier.isSynchronized(modifiers))
-                offset++;
-            if (!Modifier.isStatic(modifiers))
-                offset++;
-            int idx = 0;
+            int index = Modifier.isStatic(modifiers) ? 0 : 1;
+            // get second argument
+            index += 1;
+
+            String argsParamName = "args";
             for (int i = 0; i < localVarTable.tableLength(); i++) {
-                if (localVarTable.index(i) == offset) {
-                    idx = i;
+                if (localVarTable.index(i) == index) {
+                    argsParamName = localVarTable.variableName(i);
                     break;
                 }
             }
-            String argsParamName = localVarTable.variableName(idx);
 
             for (int i = 0; i < parameterTypes.length; i++) {
                 params.add(String.format("(%s) %s[%s]", parameterTypes[i].getName(), argsParamName, i));
@@ -236,9 +238,4 @@ class WrapsProcessor {
 //        }
         return params;
     }
-
-    public boolean isUseCopyWrapper() {
-        return useCopyWrapper;
-    }
-
 }

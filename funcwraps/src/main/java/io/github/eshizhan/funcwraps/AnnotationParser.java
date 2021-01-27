@@ -24,6 +24,7 @@ import javassist.NotFoundException;
 import javassist.bytecode.AnnotationsAttribute;
 import javassist.bytecode.Descriptor;
 import javassist.bytecode.annotation.Annotation;
+import javassist.bytecode.annotation.BooleanMemberValue;
 import javassist.bytecode.annotation.ClassMemberValue;
 import javassist.bytecode.annotation.StringMemberValue;
 
@@ -36,22 +37,16 @@ class AnnotationParser {
     private static final String METHOD_PARAMS_DESC = "(java.lang.reflect.Method,java.lang.Object[],java.lang.Object)";
     private static final String METHOD_PARAMS_DESC_WITH_WRAPPER_PARAMS =
             "(java.lang.reflect.Method,java.lang.Object[],java.lang.Object,java.lang.String[])";
-    private static final String METHOD_PARAMS_DESC_BY_COPY = "(java.lang.Object[],java.util.Map)";
 
     private ClassPool classPool;
-    private boolean useCopyWrapper = false;
 
+    private boolean copyToTarget;
     private CtMethod wrapperMethod;
     private List<String> wrapperMethodParameters;
 
-    public AnnotationParser(ClassPool classPool, CtMethod methodOrig, boolean useCopyWrapper) {
-        this.useCopyWrapper = useCopyWrapper;
+    public AnnotationParser(ClassPool classPool, CtMethod methodOrig) {
         this.classPool = classPool;
         this.wrapperMethod = getWrapperMethod(methodOrig);
-    }
-
-    public AnnotationParser(ClassPool classPool, CtMethod methodOrig) {
-        this(classPool, methodOrig, false);
     }
 
     public boolean parsed() {
@@ -62,30 +57,37 @@ class AnnotationParser {
         CtMethod methodWrapper = null;
         try {
             if (methodOrig.getName().contains(WrapsProcessorConst.WRAPPED_SUFFIX)) {
-                throw new RuntimeException("the method has been wrapped");
+                throw new HasBeenWrappedException("the method has been wrapped");
             }
             Annotation annotation = ((AnnotationsAttribute) methodOrig.getMethodInfo()
                     .getAttribute(AnnotationsAttribute.visibleTag))
                     .getAnnotation(Wraps.class.getName());
+
             String clazz = ((ClassMemberValue) annotation.getMemberValue("clazz"))
                     .getValue().replace('$', '.');
-            String method = ((StringMemberValue) annotation.getMemberValue("method"))
-                    .getValue();
+
+            String method = ((StringMemberValue) annotation.getMemberValue("method")).getValue();
             String methodName = decodeMethodMember(method);
+
+            this.copyToTarget = annotation.getMemberValue("copyToTarget") != null &&
+                    ((BooleanMemberValue) annotation.getMemberValue("copyToTarget")).getValue();
 
             methodWrapper = classPool.getMethod(clazz, methodName);
 
-            if (!useCopyWrapper && !Modifier.isStatic(methodWrapper.getModifiers()))
+            if (!copyToTarget && !Modifier.isStatic(methodWrapper.getModifiers()))
                 throw new RuntimeException("wrapper method must be static");
+            if (copyToTarget && Modifier.isStatic(methodWrapper.getModifiers()))
+                throw new RuntimeException("wrapper method must be not-static while copyToTarget is true");
             String params = Descriptor.toString(methodWrapper.getSignature());
-            String assertMethodParamsDesc = !useCopyWrapper ?
-                    (wrapperMethodParameters.isEmpty() ? METHOD_PARAMS_DESC : METHOD_PARAMS_DESC_WITH_WRAPPER_PARAMS) :
-                    METHOD_PARAMS_DESC_BY_COPY;
+            String assertMethodParamsDesc = wrapperMethodParameters.isEmpty() ?
+                    METHOD_PARAMS_DESC : METHOD_PARAMS_DESC_WITH_WRAPPER_PARAMS;
             if (!params.equals(assertMethodParamsDesc))
                 throw new RuntimeException("wrapper method parameters must be " + assertMethodParamsDesc);
-        } catch (RuntimeException | NotFoundException e) {
-            System.out.println("skip the method, cause can not get correct wrapper method:");
+        } catch (HasBeenWrappedException e) {
+            System.out.println("skip the method:");
             e.printStackTrace();
+        } catch (NotFoundException e) {
+            throw new RuntimeException(e);
         }
         return methodWrapper;
     }
@@ -117,5 +119,17 @@ class AnnotationParser {
 
     public List<String> getWrapperMethodParameters() {
         return wrapperMethodParameters;
+    }
+
+    public boolean isCopyToTarget() {
+        return copyToTarget;
+    }
+
+    private class HasBeenWrappedException extends RuntimeException {
+        private static final long serialVersionUID = 746706332526012449L;
+
+        public HasBeenWrappedException(String s) {
+            super(s);
+        }
     }
 }

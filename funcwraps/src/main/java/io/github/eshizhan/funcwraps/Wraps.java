@@ -69,6 +69,20 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface Wraps {
+    /**
+     * the class of wrapper method.
+     */
     Class<?> clazz();
+
+    /**
+     * Wrapper method name.
+     */
     String method();
+
+    /**
+     * Copy Wrapper method to target class instead of using reflect calling.
+     * using `ProceedMarker.proceed()` instead of `method.invoke` to calling wrapped method.
+     * Wrapper method must be not-static and the first argument `Method method` will passing with `null`.
+     */
+    boolean copyToTarget() default false;
 }

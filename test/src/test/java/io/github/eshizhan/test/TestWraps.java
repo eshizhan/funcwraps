@@ -20,6 +20,7 @@ package io.github.eshizhan.test;
 import io.github.eshizhan.funcwraps.Wraps;
 
 import java.lang.reflect.Method;
+import java.util.Map;
 
 public class TestWraps {
     /**
@@ -40,9 +41,21 @@ public class TestWraps {
         return x + y;
     }
 
-//    @Wraps(clazz = WrapMethods.class, method = "wrapByCopy")
-//    public Integer add2(Integer x, Integer y) {
-//        System.out.println("inside testWrapped method");
-//        return x + y;
-//    }
+    /**
+     * @see WrapMethods#wrapCopy(Method, Object[], Object)
+     */
+    @Wraps(clazz = WrapMethods.class, method = "wrapCopy", copyToTarget = true)
+    public String testWithCopy(String x, String y) throws Throwable {
+        System.out.println("inside wrapped method");
+        return x + y;
+    }
+
+    /**
+     * @see WrapMethods#wrapWithCopyAndParams(Method, Object[], Object, String[])
+     */
+    @Wraps(clazz = WrapMethods.class, method = "wrapWithCopyAndParams(param1, param2)", copyToTarget = true)
+    public String testWithCopyAndParams(String x, String y) {
+        System.out.println("inside wrapped method");
+        return x + y;
+    }
 }

@@ -17,8 +17,12 @@
 
 package io.github.eshizhan.test;
 
+import io.github.eshizhan.funcwraps.LRUCacheWrapper;
 import org.junit.Test;
 
+import java.lang.reflect.Method;
+
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class MainTest
@@ -28,10 +32,13 @@ public class MainTest
     {
         System.out.println("starting testWraps");
         TestWraps testWraps = new TestWraps();
-        String exp = "#start#s1#s2#end";
-        String ret = testWraps.testWrapped("#s1", "#s2");
+        String ret = testWraps.test();
         System.out.println(ret);
-        assertTrue(exp.equals(ret));
+        assertTrue("#start#s1#end".equals(ret));
+
+        ret = testWraps.testWrapped("#s1", "#s2");
+        System.out.println(ret);
+        assertTrue("#start#s1#s2#end".equals(ret));
     }
 
     @Test
@@ -66,6 +73,32 @@ public class MainTest
         assertTrue(exp.equals(ret));
     }
 
+    @Test
+    public void testLRUCacheWrapper()
+    {
+        System.out.println("starting testLRUCacheWrapper");
+        TestWraps testWraps = new TestWraps();
+        String ret1 = testWraps.testLRUCacheWrapper("#s1");
+        String ret2 = testWraps.testLRUCacheWrapper("#s1");
+        System.out.println(ret1);
+        System.out.println(ret2);
+        assertTrue(ret1.equals(ret2));
+
+        LRUCacheWrapper.remove(testWraps.getClass(), "testLRUCacheWrapper");
+        String ret3 = testWraps.testLRUCacheWrapper("#s1");
+        System.out.println(ret3);
+        assertFalse(ret1.equals(ret3));
+
+        String ret_s1 = testWraps.testLRUCacheWrapper("#s1");
+        String ret_s2 = testWraps.testLRUCacheWrapper("#s2");
+        String ret_s3 = testWraps.testLRUCacheWrapper("#s3");
+        String ret_s4 = testWraps.testLRUCacheWrapper("#s4");
+        assertTrue(testWraps.testLRUCacheWrapper("#s2").equals(ret_s2) &&
+                    testWraps.testLRUCacheWrapper("#s3").equals(ret_s3) &&
+                    testWraps.testLRUCacheWrapper("#s4").equals(ret_s4) &&
+                    !testWraps.testLRUCacheWrapper("#s1").equals(ret_s1));
+    }
+
     /**
      * for testing java agent
      */
@@ -74,5 +107,6 @@ public class MainTest
         new MainTest().testWrapsWithParams();
         new MainTest().testWrapsWithCopy();
         new MainTest().testWrapsWithCopyAndParams();
+        new MainTest().testLRUCacheWrapper();
     }
 }

@@ -17,12 +17,21 @@
 
 package io.github.eshizhan.test;
 
+import io.github.eshizhan.funcwraps.LRUCacheWrapper;
 import io.github.eshizhan.funcwraps.Wraps;
 
 import java.lang.reflect.Method;
-import java.util.Map;
+import java.time.Instant;
 
 public class TestWraps {
+    /**
+     * @see WrapMethods#wrap(Method, Object[], Object)
+     */
+    @Wraps(clazz = WrapMethods.class, method = "wrap")
+    public String test() {
+        System.out.println("inside wrapped method");
+        return "#s1";
+    }
     /**
      * @see WrapMethods#wrap(Method, Object[], Object)
      */
@@ -57,5 +66,20 @@ public class TestWraps {
     public String testWithCopyAndParams(String x, String y) {
         System.out.println("inside wrapped method");
         return x + y;
+    }
+
+    /**
+     * @see LRUCacheWrapper#wrap(Method, Object[], Object, String[])
+     */
+    @Wraps(clazz = LRUCacheWrapper.class, method = "wrap(3)")
+    public String testLRUCacheWrapper(String s) {
+        System.out.println("inside wrapped method");
+        String time = Instant.now().toString();
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return time;
     }
 }

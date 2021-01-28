@@ -44,12 +44,17 @@ class WrapsProcessor {
 
     public WrapsProcessor(ClassPool classPool, Path classPath) throws NotFoundException {
         this.classPool = classPool != null ? classPool : ClassPool.getDefault();
+        // add self classpath for load self wrapper method
+        ClassClassPath path = new ClassClassPath(this.getClass());
+        this.classPool.appendClassPath(path);
+
         this.classPath = classPath;
         if (classPath != null)
             this.classPool.appendClassPath(classPath.toString());
     }
 
-    public void processClassPath() throws NotFoundException, IOException, ClassNotFoundException, CannotCompileException, BadBytecode {
+    public void processClassPath()
+            throws NotFoundException, IOException, ClassNotFoundException, CannotCompileException, BadBytecode {
         if (classPath == null)
             throw new RuntimeException("classPath not set with constructor");
         int processed = 0;
@@ -123,13 +128,19 @@ class WrapsProcessor {
         String paramClasses = Arrays.stream(methodOrig.getParameterTypes())
                                     .map(t -> t.getName() + ".class")
                                     .collect(Collectors.joining(", "));
-        String methodFieldName = methodOrigRename + WrapsProcessorConst.REFLECT_SUFFIX + methodInfoOrig.getLineNumber(0);
+        String methodFieldName =
+                methodOrigRename + WrapsProcessorConst.REFLECT_SUFFIX + methodInfoOrig.getLineNumber(0);
         List<String> wrapperMethodParameters = annotationParser.getWrapperMethodParameters();
 
         StringBuffer sbField = new StringBuffer();
         sbField.append("private static java.lang.reflect.Method ").append(methodFieldName).append(" = ")
                .append(ctClass.getName()).append(".class.getDeclaredMethod(\"").append(methodOrigRename)
-               .append("\", new java.lang.Class[] {").append(paramClasses).append("});\n");
+               .append("\", ");
+        if (!paramClasses.isEmpty())
+            sbField.append("new java.lang.Class[] {").append(paramClasses).append("}");
+        else
+            sbField.append("new java.lang.Class[0]");
+        sbField.append(");");
 //        System.out.println(sbField.toString());
         CtField field = CtField.make(sbField.toString(), ctClass);
         field.getFieldInfo().addAttribute(syntheticAttribute);

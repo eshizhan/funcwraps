@@ -48,7 +48,7 @@ public class WrapMethods {
     public Object wrapCopy(Method method, Object[] args, Object target) throws Throwable {
         System.out.println("### start");
         String test = "#start";
-        Object ret = ProceedMarker.proceed();
+        String ret = ProceedMarker.proceed();
         test += ret;
         System.out.println("### end");
         test += "#end";
